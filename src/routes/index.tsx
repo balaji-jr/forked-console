@@ -7,6 +7,7 @@ import {
 	LOGS_ROUTE,
 	OIDC_NOT_CONFIGURED_ROUTE,
 	STATS_ROUTE,
+	SYSTEMS_ROUTE,
 	USERS_MANAGEMENT_ROUTE,
 } from '@/constants/routes';
 import FullPageLayout from '@/layouts/FullPageLayout';
@@ -23,6 +24,7 @@ import {
 	ConfigElement,
 	UsersElement,
 	LiveTailElement,
+	SystemsElement
 } from './elements';
 import AccessSpecificRoute from './AccessSpecificRoute';
 import OIDCNotConFigured from '@/pages/Errors/OIDC';
@@ -55,6 +57,9 @@ const AppRouter: FC = () => {
 						</Route>
 						<Route element={<AccessSpecificRoute accessRequired={['PutAlert']} />}>
 							<Route path={CONFIG_ROUTE} element={<ConfigElement />} />
+						</Route>
+						<Route element={<AccessSpecificRoute accessRequired={['ListUser']} />}>
+							<Route path={SYSTEMS_ROUTE} element={<SystemsElement />} />
 						</Route>
 					</Route>
 				</Route>

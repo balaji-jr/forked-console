@@ -10,12 +10,13 @@ import {
 	LiveTailHeader,
 	LogsHeader,
 	StatsHeader,
+	SystemsHeader,
 	UsersManagementHeader,
 } from '@/components/Header/SubHeader';
 
 // page-wise providers
 import LogsPageProvider from '@/pages/Logs/Context';
-import StatsPageProvider from '@/pages/Stats/Context';
+import StatsPageProvider from '@/pages/Stats/context';
 
 // component-wise providers
 import QueryFilterProvider from '@/providers/QueryFilterProvider';
@@ -104,6 +105,17 @@ export const UsersElement: FC = () => {
 		<SuspensePage>
 			<UsersManagementHeader />
 			<Users />
+		</SuspensePage>
+	);
+};
+
+const Systems = lazy(() => import('@/pages/Systems'));
+
+export const SystemsElement: FC = () => {
+	return (
+		<SuspensePage>
+			<SystemsHeader />
+			<Systems />
 		</SuspensePage>
 	);
 };

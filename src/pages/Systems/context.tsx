@@ -6,26 +6,26 @@ const Context = createContext({});
 
 const { Provider } = Context;
 
-interface StatsPageProvider {
+interface SystemsPageProvider {
 	children: ReactNode;
 } 
 
-interface StatsPageContextValue {
-	state: StatsPageContextState;
-	methods: StatsPageContextMethods;
+interface LogsPageContextValue {
+	state: SystemsPageContextState;
+	methods: SystemsPageContextMethods;
 }
 
-type StatsPageContextState = {
+type SystemsPageContextState = {
 	fetchStartTime: Dayjs;
 	statusFixedDurations: number;
 }
 
-type StatsPageContextMethods = {
+type SystemsPageContextMethods = {
 	resetFetchStartTime: () => void;
 	setStatusFixedDurations: Dispatch<SetStateAction<number>>;
 }
 
-const StatsPageProvider: FC<StatsPageProvider> = ({ children }) => {
+const SystemsPageProvider: FC<SystemsPageProvider> = ({ children }) => {
 	const [fetchStartTime, setFetchStartTime] = useState<Dayjs>(dayjs());
 	const [statusFixedDurations, setStatusFixedDurations] = useState<number>(0);
 
@@ -33,12 +33,12 @@ const StatsPageProvider: FC<StatsPageProvider> = ({ children }) => {
 		setFetchStartTime(dayjs())
 	}, [])
 
-	const state: StatsPageContextState = {
+	const state: SystemsPageContextState = {
 		fetchStartTime,
 		statusFixedDurations
 	};
 
-	const methods: StatsPageContextMethods = {
+	const methods: SystemsPageContextMethods = {
 		resetFetchStartTime,
 		setStatusFixedDurations
 	}
@@ -48,6 +48,6 @@ const StatsPageProvider: FC<StatsPageProvider> = ({ children }) => {
 	return <Provider value={value}>{children}</Provider>;
 };
 
-export const useStatsPageContext = () => useContext(Context) as StatsPageContextValue;
+export const useSystemsPageContext = () => useContext(Context) as LogsPageContextValue;
 
-export default StatsPageProvider;
+export default SystemsPageProvider;

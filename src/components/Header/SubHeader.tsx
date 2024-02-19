@@ -18,7 +18,7 @@ import { IconCodeCircle } from '@tabler/icons-react';
 import styles from './styles/LogQuery.module.css';
 import headerStyles from './styles/Header.module.css';
 import Querier from './Querier';
-import { useStatsPageContext } from '@/pages/Stats/Context';
+import { useStatsPageContext } from '@/pages/Stats/context';
 
 type HeaderLayoutProps = {
 	children: React.ReactNode;
@@ -197,6 +197,23 @@ export const UsersManagementHeader: FC = () => {
 					<Box className={innerContainer}>
 						<ReloadUser />
 						<DocsUser />
+					</Box>
+				</Box>
+			</Box>
+		</HeaderLayout>
+	);
+};
+
+export const SystemsHeader: FC = () => {
+	const classes = styles;
+	const { container, innerContainer } = classes;
+
+	return (
+		<HeaderLayout>
+			<Box className={container}>
+				<Box>
+					<Box className={innerContainer}>
+						<HeaderBreadcrumbs crumbs={['Systems']} />
 					</Box>
 				</Box>
 			</Box>

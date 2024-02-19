@@ -12,6 +12,7 @@ import {
 	IconInfoCircle,
 	IconUserCog,
 	IconTimelineEvent,
+	IconServerCog,
 } from '@tabler/icons-react';
 import { FC, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
@@ -20,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { useHeaderContext } from '@/layouts/MainLayout/Context';
 import useMountedState from '@/hooks/useMountedState';
 import { useDisclosure } from '@mantine/hooks';
-import { USERS_MANAGEMENT_ROUTE } from '@/constants/routes';
+import { SYSTEMS_ROUTE, USERS_MANAGEMENT_ROUTE } from '@/constants/routes';
 import InfoModal from './infoModal';
 import { getStreamsSepcificAccess, getUserSepcificStreams } from './rolesHandler';
 import { LogStreamData } from '@/@types/parseable/api/stream';
@@ -99,7 +100,10 @@ const Navbar: FC = () => {
 		} else if (userSepecficStreams && Boolean(userSepecficStreams.length)) {
 			if (location.pathname === USERS_MANAGEMENT_ROUTE) {
 				handleChangeWithoutRiderection(userSepecficStreams[0].name, location.pathname);
-				navigate('/users');
+				navigate(USERS_MANAGEMENT_ROUTE);
+			} else if (location.pathname === SYSTEMS_ROUTE) {
+				handleChangeWithoutRiderection(userSepecficStreams[0].name, location.pathname);
+				navigate(SYSTEMS_ROUTE);
 			} else {
 				handleChange(userSepecficStreams[0].name);
 			}
@@ -110,7 +114,7 @@ const Navbar: FC = () => {
 		const targetPage = page === '/' ? '/logs' : page;
 		handleChangeWithoutRiderection(value, targetPage);
 		setUserSepecficAccess(getStreamsSepcificAccess(getUserRolesData?.data, value));
-		if (page !== '/users') {
+		if (page !== USERS_MANAGEMENT_ROUTE && page !== SYSTEMS_ROUTE) {
 			navigate(`/${value}${targetPage}`);
 		}
 	};
@@ -216,13 +220,26 @@ const Navbar: FC = () => {
 						{!userSepecficAccess?.some((access: string) => ['ListUser'].includes(access)) ? null : (
 							<NavLink
 								className={
-									(currentPage === USERS_MANAGEMENT_ROUTE && styles.userManagementBtnActive) || styles.userManagementBtn
+									(currentPage === USERS_MANAGEMENT_ROUTE && styles.navbtnActive) || styles.navBtn
 								}
 								label="Users"
 								leftSection={<IconUserCog size="1.5rem" stroke={1.3} />}
 								onClick={() => {
-									navigate('/users');
+									navigate(USERS_MANAGEMENT_ROUTE);
 									setCurrentPage(USERS_MANAGEMENT_ROUTE);
+								}}
+							/>
+						)}
+						{!userSepecficAccess?.some((access: string) => ['UpdateIngestor'].includes(access)) ? null : (
+							<NavLink
+								className={
+									(currentPage === SYSTEMS_ROUTE && styles.navbtnActive) || styles.navBtn
+								}
+								label="Systems"
+								leftSection={<IconServerCog size="1.5rem" stroke={1.3} />}
+								onClick={() => {
+									navigate(SYSTEMS_ROUTE);
+									setCurrentPage(SYSTEMS_ROUTE);
 								}}
 							/>
 						)}

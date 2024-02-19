@@ -9,7 +9,7 @@ import { useAlertsEditor } from '@/hooks/useAlertsEditor';
 import { useParams } from 'react-router-dom';
 import alertStyles from './styles/Alerts.module.css'
 import { CodeHighlight } from '@mantine/code-highlight';
-import { useStatsPageContext } from './Context';
+import { useStatsPageContext } from './context';
 
 const Alerts: FC = () => {
 	const {

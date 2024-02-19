@@ -19,7 +19,7 @@ import { useLogStreamStats } from '@/hooks/useLogStreamStats';
 import { useParams } from 'react-router-dom';
 import statusStyles from './styles/Status.module.css';
 import statCardStyles from './styles/StatsCard.module.css';
-import { useStatsPageContext } from './Context';
+import { useStatsPageContext } from './context';
 
 const Status: FC = () => {
 	const { streamName } = useParams();
