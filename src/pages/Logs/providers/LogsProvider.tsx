@@ -67,11 +67,11 @@ const defaultLiveTailConfig = {
 };
 
 const defaultCustQuerySearchState = {
-	showQueryEditor: false,
+	showQueryBuilder: false,
 	isQuerySearchActive: false,
 	custSearchQuery: '',
-	mode: 'filters',
 	viewMode: 'filters',
+	activeMode: null,
 };
 
 type LogQueryData = {
@@ -80,11 +80,11 @@ type LogQueryData = {
 };
 
 type CustQuerySearchState = {
-	showQueryEditor: boolean;
+	showQueryBuilder: boolean;
 	isQuerySearchActive: boolean;
 	custSearchQuery: string;
-	mode: string;
 	viewMode: string;
+	activeMode: null | 'filters' | 'sql';
 };
 
 type LogsStore = {
@@ -96,11 +96,11 @@ type LogsStore = {
 	custQuerySearchState: CustQuerySearchState;
 
 	modalOpts: {
-		deleteModalOpen: boolean,
-		alertsModalOpen: boolean,
-		retentionModalOpen: boolean,
-		queryBuilderModalOpen: boolean,
-	},
+		deleteModalOpen: boolean;
+		alertsModalOpen: boolean;
+		retentionModalOpen: boolean;
+		queryBuilderModalOpen: boolean;
+	};
 
 	tableOpts: {
 		disabledColumns: string[];
@@ -113,10 +113,10 @@ type LogsStore = {
 		perPage: number;
 		currentOffset: number;
 		headers: string[];
-	}
+	};
 
 	data: LogQueryData & {
-		schema: LogStreamSchemaData | null
+		schema: LogStreamSchemaData | null;
 	};
 };
 
@@ -131,10 +131,10 @@ type LogsStoreReducers = {
 	setRefreshInterval: (store: LogsStore, interval: number | null) => ReducerOutput;
 	resetQuickFilters: (store: LogsStore) => ReducerOutput;
 	streamChangeCleanup: (store: LogsStore) => ReducerOutput;
-	toggleQueryEditor: (store: LogsStore) => ReducerOutput;
+	toggleQueryBuilder: (store: LogsStore) => ReducerOutput;
 	resetCustQuerySearchState: (store: LogsStore) => ReducerOutput;
 	setCustQuerySearchState: (store: LogsStore, payload: Partial<CustQuerySearchState>) => ReducerOutput;
-	toggleCustQuerySearchMode: (store: LogsStore) => ReducerOutput;
+	toggleCustQuerySearchViewMode: (store: LogsStore, targetMode: 'sql' | 'filters') => ReducerOutput;
 	toggleDeleteModal: (store: LogsStore) => ReducerOutput;
 	toggleAlertsModal: (store: LogsStore) => ReducerOutput;
 	toggleRetentionModal: (store: LogsStore) => ReducerOutput;
@@ -149,8 +149,9 @@ type LogsStoreReducers = {
 	setPageAndPageData: (store: LogsStore, pageNo: number) => ReducerOutput;
 
 	// data reducers
-	setData: (store: LogsStore, newData: {rawData?: Log[], filteredData?: Log[]}) => ReducerOutput;
+	setData: (store: LogsStore, newData: { rawData?: Log[]; filteredData?: Log[] }) => ReducerOutput;
 	setStreamSchema: (store: LogsStore, schema: LogStreamSchemaData) => ReducerOutput;
+	applyCustomQuery: (store: LogsStore, query: string, mode: 'filters' | 'sql') => ReducerOutput;
 };
 
 const initialState: LogsStore = {
@@ -242,26 +243,31 @@ const streamChangeCleanup = (_store: LogsStore) => {
 	return { ...initialState };
 };
 
-const toggleQueryEditor = (store: LogsStore) => {
+const toggleQueryBuilder = (store: LogsStore) => {
 	const { custQuerySearchState } = store;
-	return { custQuerySearchState: { ...custQuerySearchState, showQueryEditor: !custQuerySearchState.showQueryEditor } };
+	return {
+		custQuerySearchState: { ...custQuerySearchState, showQueryBuilder: !custQuerySearchState.showQueryBuilder },
+	};
 };
 
 const resetCustQuerySearchState = (store: LogsStore) => {
 	const { custQuerySearchState } = store;
-	return { custQuerySearchState: { ...defaultCustQuerySearchState, viewMode: custQuerySearchState.viewMode } };
+	return {
+		custQuerySearchState: { ...defaultCustQuerySearchState, viewMode: custQuerySearchState.viewMode },
+		...getCleanStoreForRefetch(store),
+	};
 };
 
 const setCustQuerySearchState = (store: LogsStore, payload: Partial<CustQuerySearchState>) => {
 	const { custQuerySearchState } = store;
 	return {
-		custQuerySearchState: { ...custQuerySearchState, ...payload, isQuerySearchActive: true, showQueryEditor: false },
+		custQuerySearchState: { ...custQuerySearchState, ...payload, isQuerySearchActive: true, showQueryBuilder: false },
 	};
 };
 
-const toggleCustQuerySearchMode = (store: LogsStore) => {
+const toggleCustQuerySearchViewMode = (store: LogsStore, targetMode: 'filters' | 'sql') => {
 	const { custQuerySearchState } = store;
-	const targetMode = custQuerySearchState.viewMode === 'filters' ? 'sql' : 'filters';
+
 	return {
 		custQuerySearchState: { ...custQuerySearchState, viewMode: targetMode },
 	};
@@ -287,8 +293,8 @@ const toggleDisabledColumns = (store: LogsStore, columnName: string) => {
 	return {
 		tableOpts: {
 			...tableOpts,
-			disabledColumns:  addOrRemoveElement(tableOpts.disabledColumns, columnName),
-		}
+			disabledColumns: addOrRemoveElement(tableOpts.disabledColumns, columnName),
+		},
 	};
 };
 
@@ -297,15 +303,15 @@ const togglePinnedColumns = (store: LogsStore, columnName: string) => {
 	return {
 		tableOpts: {
 			...tableOpts,
-			pinnedColumns:  addOrRemoveElement(tableOpts.pinnedColumns, columnName),
-		}
+			pinnedColumns: addOrRemoveElement(tableOpts.pinnedColumns, columnName),
+		},
 	};
 };
 
-const setData = (store: LogsStore, newData: {rawData?: Log[], filteredData?: Log[]}) => {
+const setData = (store: LogsStore, newData: { rawData?: Log[]; filteredData?: Log[] }) => {
 	const { data: existingData, custQuerySearchState, tableOpts } = store;
 	const { rawData, filteredData } = newData;
-	const currentPage = tableOpts.currentPage === 0 ? 1 : tableOpts.currentPage
+	const currentPage = tableOpts.currentPage === 0 ? 1 : tableOpts.currentPage;
 	const newPageSlice = filteredData && getPageSlice(currentPage, tableOpts.perPage, filteredData);
 
 	// only if pageoffset is 1
@@ -319,20 +325,20 @@ const setData = (store: LogsStore, newData: {rawData?: Log[], filteredData?: Log
 			...store.tableOpts,
 			...(newPageSlice ? { pageData: newPageSlice } : {}),
 			...(newHeaders ? { headers: newHeaders } : {}),
-			currentPage
+			currentPage,
 		},
 		data: { ...existingData, ...(rawData ? { rawData } : {}), ...(filteredData ? { filteredData } : {}) },
 	};
-}
+};
 
 const setStreamSchema = (store: LogsStore, schema: LogStreamSchemaData) => {
 	return {
 		data: {
 			...store.data,
-			schema
-		}
-	}
-}
+			schema,
+		},
+	};
+};
 
 const setPerPage = (store: LogsStore, perPage: number) => {
 	return {
@@ -341,7 +347,7 @@ const setPerPage = (store: LogsStore, perPage: number) => {
 			perPage,
 		},
 	};
-}
+};
 
 const setCurrentPage = (store: LogsStore, currentPage: number) => {
 	return {
@@ -386,6 +392,40 @@ const setPageAndPageData = (store: LogsStore, pageNo: number) => {
 	};
 };
 
+const getCleanStoreForRefetch = (store: LogsStore) => {
+	const { tableOpts, data } = store;
+	return {
+		tableOpts: {
+			...tableOpts,
+			pageData: [],
+			totalCount: 0,
+			displayedCount: 0,
+			currentPage: 0,
+			currentOffset: 0,
+			headers: [],
+		},
+		data: {
+			...data,
+			filteredData: [],
+			rawData: [],
+		},
+	};
+};
+
+const applyCustomQuery = (store: LogsStore, query: string, mode: 'filters' | 'sql') => {
+	const { custQuerySearchState } = store;
+	return {
+		custQuerySearchState: {
+			...custQuerySearchState,
+			showQueryBuilder: false,
+			isQuerySearchActive: true,
+			custSearchQuery: query,
+			activeMode: mode,
+		},
+		...getCleanStoreForRefetch(store),
+	};
+};
+
 const logsStoreReducers: LogsStoreReducers = {
 	setTimeRange,
 	resetTimeRange,
@@ -397,10 +437,10 @@ const logsStoreReducers: LogsStoreReducers = {
 	setRefreshInterval,
 	resetQuickFilters,
 	streamChangeCleanup,
-	toggleQueryEditor,
+	toggleQueryBuilder,
 	resetCustQuerySearchState,
 	setCustQuerySearchState,
-	toggleCustQuerySearchMode,
+	toggleCustQuerySearchViewMode,
 	toggleAlertsModal,
 	toggleRetentionModal,
 	toggleDeleteModal,
@@ -412,7 +452,8 @@ const logsStoreReducers: LogsStoreReducers = {
 	setCurrentPage,
 	setCurrentOffset,
 	setTotalCount,
-	setPageAndPageData
+	setPageAndPageData,
+	applyCustomQuery,
 };
 
 export { LogsProvider, useLogsStore, logsStoreReducers };

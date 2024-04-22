@@ -43,10 +43,10 @@ export const useQueryLogs = () => {
 	});
 	const [isPending, startTransition] = useTransition();
 	const {
-		state: { subLogQueryData, custQuerySearchState },
+		state: { subLogQueryData },
 	} = useLogsPageContext();
 	const [currentStream] = useAppStore(store => store.currentStream)
-	const [{timeRange, tableOpts: {currentOffset}}, setLogsStore] = useLogsStore(store => store)
+	const [{timeRange, tableOpts: {currentOffset}, custQuerySearchState}, setLogsStore] = useLogsStore(store => store)
 	const { isQuerySearchActive, custSearchQuery } = custQuerySearchState;
 
 	const data: Log[] | null = useMemo(() => {

@@ -227,7 +227,6 @@ const LoadingView = () => {
 const Footer = (props) => {
 	const [tableOpts, setLogsStore] = useLogsStore((store) => store.tableOpts);
 	const { totalPages, currentOffset, currentPage, perPage } = tableOpts;
-	console.log(tableOpts)
 	const onPageChange = useCallback((page) => {
 		setLogsStore((store) => setPageAndPageData(store, page));
 	}, []);
@@ -371,7 +370,6 @@ const LogTable2 = () =>{
 	const hasContentLoaded = !schemaLoading && !logsLoading;
 	const errorMessage = logStreamSchemaError || logsError;
 	const hasNoData = hasContentLoaded && !errorMessage && pageData.length === 0;
-	console.log(pageData)
 	return (
 		<TableContainer>
 			<FilterPills />

@@ -80,7 +80,6 @@ const toggleHelpModal = (store: AppStore) => {
 };
 
 const changeStream = (_store: AppStore, stream: string) => {
-	console.log(stream, "changing stream")
 	return { currentStream: stream };
 };
 

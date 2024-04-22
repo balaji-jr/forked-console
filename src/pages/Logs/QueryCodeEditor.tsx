@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, MutableRefObject, useCallback, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Box, Button, Flex, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
 import { ErrorMarker, errChecker } from './ErrorMarker';
@@ -6,10 +6,12 @@ import useMountedState from '@/hooks/useMountedState';
 import { notify } from '@/utils/notification';
 import { usePostLLM } from '@/hooks/usePostLLM';
 import { sanitiseSqlString } from '@/utils/sanitiseSqlString';
-import { LOAD_LIMIT, useLogsPageContext } from './logsContextProvider';
+import { LOAD_LIMIT } from './logsContextProvider';
 import { Field } from '@/@types/parseable/dataType';
 import queryCodeStyles from './styles/QueryCode.module.css';
 import { useAppStore } from '@/layouts/MainLayout/providers/AppProvider';
+import { useFilterStore } from './providers/FilterProvider';
+import { useLogsStore } from './providers/LogsProvider';
 
 const genColumnConfig = (fields: Field[]) => {
 	const columnConfig = { leftColumns: [], rightColumns: [] };
@@ -28,31 +30,39 @@ const genColumnConfig = (fields: Field[]) => {
 	}, columnConfig);
 };
 
-const QueryCodeEditor: FC = () => {
-	const [llmActive] = useAppStore(store => store.instanceConfig?.llmActive)
-	const {
-		state: {
-			custQuerySearchState: { isQuerySearchActive, mode },
-			subLogStreamSchema,
-			queryCodeEditorRef,
-		},
-		methods: { resetQuerySearch, setCustSearchQuery, closeBuilderModal },
-	} = useLogsPageContext();
+const defaultCustSQLQuery = (streamName: string | null) => {
+	if (streamName && streamName.length > 0) {
+		return `SELECT * FROM ${streamName} LIMIT ${LOAD_LIMIT};`
+	} else {
+		return ''
+	}
+}
 
-	const fields = subLogStreamSchema.get()?.fields || [];
+const QueryCodeEditor: FC<{ queryCodeEditorRef: MutableRefObject<any>, onSqlSearchApply: (query: string) => void; onClear: () => void; }> = (props) => {
+	const [llmActive] = useAppStore((store) => store.instanceConfig?.llmActive);
+	const [] = useFilterStore((store) => store);
+	const [{ isQuerySearchActive, activeMode }] = useLogsStore((store) => store.custQuerySearchState);
+	const [schema] = useLogsStore((store) => store.data.schema);
+	const fields = schema?.fields || [];
 	const editorRef = React.useRef<any>();
 	const monacoRef = React.useRef<any>();
-	const [currentStream] = useAppStore(store => store.currentStream)
+	const [currentStream] = useAppStore((store) => store.currentStream);
 	const [localStreamName, setlocalStreamName] = useMountedState<string | null>(currentStream);
 	const [query, setQuery] = useMountedState<string>('');
 	const [aiQuery, setAiQuery] = useMountedState('');
 	const [localLlmActive, setlocalLlmActive] = useMountedState(llmActive);
 	const { data: resAIQuery, postLLMQuery } = usePostLLM();
 	const isLlmActive = !!llmActive;
-	const isSqlSearchActive = isQuerySearchActive && mode === 'sql';
+	const isSqlSearchActive = isQuerySearchActive && activeMode === 'sql';
+
+	useEffect(() => {
+		if (props.queryCodeEditorRef.current === '' || currentStream !== localStreamName) {
+			props.queryCodeEditorRef.current = defaultCustSQLQuery(currentStream);
+		}
+	}, [currentStream]);
 
 	const updateQuery = useCallback((query: string) => {
-		queryCodeEditorRef.current = query;
+		props.queryCodeEditorRef.current = query;
 		setQuery(query);
 	}, []);
 
@@ -90,22 +100,21 @@ const QueryCodeEditor: FC = () => {
 	}, [currentStream, isLlmActive]);
 
 	useEffect(() => {
-		updateQuery(queryCodeEditorRef.current);
+		updateQuery(props.queryCodeEditorRef.current);
 	}, []);
 
 	function handleEditorDidMount(editor: any, monaco: any) {
 		editorRef.current = editor;
 		monacoRef.current = monaco;
 		editor.addCommand(monaco.KeyMod.CtrlCmd + monaco.KeyCode.Enter, async () => {
-			runQuery(queryCodeEditorRef.current);
+			runQuery(props.queryCodeEditorRef.current);
 		});
 	}
 
 	const runQuery = (inputQuery: string) => {
 		const query = sanitiseSqlString(inputQuery);
 		const parsedQuery = query.replace(/(\r\n|\n|\r)/gm, '');
-		setCustSearchQuery(parsedQuery, 'sql');
-		closeBuilderModal();
+		props.onSqlSearchApply(parsedQuery)
 	};
 
 	return (
@@ -113,7 +122,7 @@ const QueryCodeEditor: FC = () => {
 			<ScrollArea>
 				<Box style={{ marginTop: 16, marginBottom: 8 }}>
 					{localLlmActive ? (
-						<Stack gap={0} style={{flexDirection: 'row', width: '100%'}}>
+						<Stack gap={0} style={{ flexDirection: 'row', width: '100%' }}>
 							<TextInput
 								type="text"
 								name="ai_query"
@@ -156,7 +165,7 @@ const QueryCodeEditor: FC = () => {
 				</Stack>
 			</ScrollArea>
 			<Stack className={queryCodeStyles.footer} style={{ alignItems: 'center' }}>
-				<Button onClick={resetQuerySearch} disabled={!isSqlSearchActive} variant='outline'>
+				<Button onClick={props.onClear} disabled={!isSqlSearchActive} variant="outline">
 					Clear
 				</Button>
 				<Button onClick={() => runQuery(query)}>Apply</Button>

@@ -57,7 +57,7 @@ interface LogsPageContextMethods {
 	toggleLiveTail: () => void;
 	closeAlertsModal: () => void;
 	toggleBuilderModal: () => void;
-	toggleCustQuerySearchMode: (mode: custQuerySearchMode) => void;
+	toggleCustQuerySearchViewMode: (mode: custQuerySearchMode) => void;
 	closeBuilderModal: () => void;
 	closeDeleteModal: () => void;
 }
@@ -182,7 +182,7 @@ const LogsPageProvider: FC<LogsPageProviderProps> = ({ children }) => {
 		}));
 	}, []);
 
-	const toggleCustQuerySearchMode = useCallback((viewMode: custQuerySearchMode) => {
+	const toggleCustQuerySearchViewMode = useCallback((viewMode: custQuerySearchMode) => {
 		setCustQuerySearchState((prev) => ({ ...prev, viewMode }));
 	}, []);
 
@@ -249,7 +249,7 @@ const LogsPageProvider: FC<LogsPageProviderProps> = ({ children }) => {
 		closeRetentionModal,
 		toggleMaximize,
 		toggleLiveTail,
-		toggleCustQuerySearchMode,
+		toggleCustQuerySearchViewMode,
 		toggleBuilderModal,
 		closeBuilderModal,
 	};
