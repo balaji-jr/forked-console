@@ -1,22 +1,27 @@
 import { Button, Group, Modal, TextInput } from '@mantine/core';
-import { useLogsPageContext } from './logsContextProvider';
 import styles from './styles/Logs.module.css';
 import { useCallback, useState } from 'react';
 import { useLogStream } from '@/hooks/useLogStream';
+import { useLogsStore, logsStoreReducers } from './providers/LogsProvider';
+import { useAppStore } from '@/layouts/MainLayout/providers/AppProvider';
+
+const { toggleDeleteModal } = logsStoreReducers;
 
 const DeleteStreamModal = () => {
-	const {
-		state: { deleteModalOpen, currentStream },
-		methods: { closeDeleteModal },
-	} = useLogsPageContext();
+	const [deleteModalOpen, setLogsStore] = useLogsStore((store) => store.modalOpts.deleteModalOpen);
 	const [confirmInputValue, setConfirmInputValue] = useState<string>('');
 	const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
 		setConfirmInputValue(e.target.value);
 	}, []);
-
+	const onToggleModal = useCallback(() => {
+		setLogsStore((store) => toggleDeleteModal(store));
+	}, []);
 	const { deleteLogStreamMutation } = useLogStream();
 
+	const [currentStream] = useAppStore((store) => store.currentStream);
+
 	const handleDeleteStream = useCallback(() => {
+		if (!currentStream) return;
 		deleteLogStreamMutation({ deleteStream: currentStream });
 	}, [currentStream]);
 
@@ -25,7 +30,7 @@ const DeleteStreamModal = () => {
 			withinPortal
 			size="md"
 			opened={deleteModalOpen}
-			onClose={closeDeleteModal}
+			onClose={onToggleModal}
 			title={'Delete Stream'}
 			centered
 			className={styles.modalStyle}
@@ -39,7 +44,7 @@ const DeleteStreamModal = () => {
 				value={confirmInputValue}
 			/>
 			<Group mt={10} justify="right">
-				<Button onClick={closeDeleteModal} className={styles.modalCancelBtn}>
+				<Button onClick={onToggleModal} className={styles.modalCancelBtn}>
 					Cancel
 				</Button>
 				<Button

@@ -7,18 +7,15 @@ import ViewLog from './ViewLog';
 import DeleteStreamModal from './DeleteStreamModal';
 import AlertsModal from './AlertsModal';
 import RententionModal from './RetentionModal';
-import { useLogsPageContext } from './logsContextProvider';
 import PrimaryToolbar from './PrimaryToolbar';
 import SecondaryToolbar from './SecondaryToolbar';
 import { useAppStore } from '@/layouts/MainLayout/providers/AppProvider';
+import { useLogsStore } from './providers/LogsProvider';
 
 const Logs: FC = () => {
 	useDocumentTitle('Parseable | Logs');
-	const {
-		state: { liveTailToggled },
-	} = useLogsPageContext();
 	const [currentStream] = useAppStore(store => store.currentStream)
-
+	const [showLiveTail] = useLogsStore(store => store.liveTailConfig.showLiveTail)
 	if (!currentStream) return null;
 	return (
 		<Box style={{ flex: 1, display: 'flex', position: 'relative', flexDirection: 'column' }}>
@@ -27,7 +24,7 @@ const Logs: FC = () => {
 			<RententionModal />
 			<PrimaryToolbar />
 			<SecondaryToolbar />
-			{liveTailToggled ? <LiveLogTable /> : <StaticLogTable />}
+			{showLiveTail ? <LiveLogTable /> : <StaticLogTable />}
 			{/* TODO: need to move the live logtable into the Logs folder */}
 			<ViewLog />
 		</Box>

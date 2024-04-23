@@ -4,19 +4,15 @@ import { useCallback, type FC } from 'react';
 import classes from './styles/LogQuery.module.css';
 import { useLogsStore, logsStoreReducers } from '@/pages/Logs/providers/LogsProvider';
 
-type RefreshNowProps = {
-	onRefresh: () => void;
-};
-
-const {getCleanStoreForRefetch} = logsStoreReducers
+const { getCleanStoreForRefetch } = logsStoreReducers;
 
 const RefreshNow: FC = () => {
 	const { refreshNowBtn } = classes;
-	const [, setLogsStore] = useLogsStore(_store => null);
+	const [, setLogsStore] = useLogsStore((_store) => null);
 
 	const onRefresh = useCallback(() => {
-		setLogsStore(store => getCleanStoreForRefetch(store))
-	}, [])
+		setLogsStore((store) => getCleanStoreForRefetch(store));
+	}, []);
 	return (
 		<Tooltip label="Refresh">
 			<Button className={refreshNowBtn} onClick={onRefresh}>

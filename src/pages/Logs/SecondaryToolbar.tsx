@@ -1,6 +1,5 @@
 import { Menu, Stack, px } from '@mantine/core';
 import IconButton from '@/components/Button/IconButton';
-import { useLogsPageContext } from './logsContextProvider';
 import { downloadDataAsCSV, downloadDataAsJson } from '@/utils/exportHelpers';
 import classes from './styles/Toolbar.module.css';
 import { IconDownload, IconMaximize } from '@tabler/icons-react';
@@ -14,7 +13,7 @@ import { appStoreReducers, useAppStore } from '@/layouts/MainLayout/providers/Ap
 import { useCallback } from 'react';
 import { useLogsStore, logsStoreReducers } from './providers/LogsProvider';
 
-const { resetTimeRange } = logsStoreReducers;
+const { makeExportData } = logsStoreReducers;
 const renderExportIcon = () => <IconDownload size={px('1.4rem')} stroke={1.5} />;
 const renderMaximizeIcon = () => <IconMaximize size={px('1.4rem')} stroke={1.5} />;
 
@@ -25,33 +24,28 @@ const MaximizeButton = () => {
 };
 
 const SecondaryToolbar = () => {
-	const {
-		methods: { makeExportData },
-		state: { liveTailToggled },
-	} = useLogsPageContext();
 	const [currentStream] = useAppStore((store) => store.currentStream);
 	const [maximized] = useAppStore((store) => store.maximized);
-	const [, setLogsStore] = useLogsStore((store) => store.timeRange);
+	const [showLiveTail] = useLogsStore((store) => store.liveTailConfig.showLiveTail);
+	const [headers] = useLogsStore((store) => store.tableOpts.headers);
+	const [filteredData] = useLogsStore((store) => store.data.filteredData);
 	const exportHandler = useCallback(
 		(fileType: string | null) => {
 			const filename = `${currentStream}-logs`;
 			if (fileType === 'CSV') {
-				downloadDataAsCSV(makeExportData('CSV'), filename);
+				downloadDataAsCSV(makeExportData(filteredData, headers, 'CSV'), filename);
 			} else if (fileType === 'JSON') {
-				downloadDataAsJson(makeExportData('JSON'), filename);
+				downloadDataAsJson(makeExportData(filteredData, headers, 'JSON'), filename);
 			}
 		},
 		[currentStream],
 	);
-	const resetTimeInterval = useCallback(() => {
-		setLogsStore((store) => resetTimeRange(store));
-	}, []);
 
 	if (maximized) return null;
 
 	return (
 		<Stack className={classes.logsSecondaryToolbar} gap={0} style={{ height: LOGS_SECONDARY_TOOLBAR_HEIGHT }}>
-			{!liveTailToggled && (
+			{!showLiveTail && (
 				<Stack gap={0} style={{ flexDirection: 'row', width: '100%' }}>
 					<Querier />
 					<TimeRange />
@@ -72,10 +66,10 @@ const SecondaryToolbar = () => {
 						</Menu.Dropdown>
 					</Menu>
 					<MaximizeButton />
-					<RefreshNow onRefresh={resetTimeInterval} />
+					<RefreshNow />
 				</Stack>
 			)}
-			{liveTailToggled && (
+			{showLiveTail && (
 				<Stack gap={0} style={{ flexDirection: 'row', width: '100%', justifyContent: 'flex-end' }}>
 					<StreamingButton />
 					<MaximizeButton />

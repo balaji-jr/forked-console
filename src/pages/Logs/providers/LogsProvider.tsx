@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { addOrRemoveElement } from '@/utils';
 import { getPageSlice, makeHeadersFromSchema, makeHeadersfromData } from '../utils';
 import _ from 'lodash';
+import { sanitizeCSVData } from '@/utils/exportHelpers';
 
 export const DEFAULT_FIXED_DURATIONS = FIXED_DURATIONS[0];
 
@@ -40,6 +41,7 @@ type LiveTailConfig = {
 	liveTailSchemaData: LogStreamData;
 	liveTailSearchValue: string;
 	liveTailSearchField: string;
+	showLiveTail: boolean;
 };
 
 const getDefaultTimeRange = (duration: FixedDuration = DEFAULT_FIXED_DURATIONS) => {
@@ -68,6 +70,7 @@ const defaultLiveTailConfig = {
 	liveTailSchemaData: [],
 	liveTailSearchValue: '',
 	liveTailSearchField: '',
+	showLiveTail: false,
 };
 
 const defaultCustQuerySearchState = {
@@ -145,6 +148,8 @@ type LogsStoreReducers = {
 	toggleDeleteModal: (store: LogsStore) => ReducerOutput;
 	toggleAlertsModal: (store: LogsStore) => ReducerOutput;
 	toggleRetentionModal: (store: LogsStore) => ReducerOutput;
+	toggleLiveTail: (store: LogsStore) => ReducerOutput;
+	setSelectedLog: (store: LogsStore, log: Log | null) => ReducerOutput;
 
 	// table opts reducers
 	toggleDisabledColumns: (store: LogsStore, columnName: string) => ReducerOutput;
@@ -163,6 +168,7 @@ type LogsStoreReducers = {
 	setStreamSchema: (store: LogsStore, schema: LogStreamSchemaData) => ReducerOutput;
 	applyCustomQuery: (store: LogsStore, query: string, mode: 'filters' | 'sql') => ReducerOutput;
 	getUniqueValues: (data: Log[], key: string) => string[];
+	makeExportData: (data: Log[], headers: string[], type: string) => Log[];
 };
 
 const initialState: LogsStore = {
@@ -211,6 +217,10 @@ const getTotalPages = (data: Log[], perPage: number) => {
 	return _.isEmpty(data) ? 0 : _.size(data) / perPage;
 };
 
+const setSelectedLog = (_store: LogsStore, log: Log | null) => {
+	return { selectedLog: log };
+};
+
 // reducers
 const setTimeRange = (store: LogsStore, payload: Partial<TimeRange>) => {
 	const { label } = payload;
@@ -255,6 +265,10 @@ const resetLiveTailSearchState = (store: LogsStore) => {
 const setLiveTailSchema = (store: LogsStore, liveTailSchemaData: LogStreamData) => {
 	return { liveTailConfig: { ...store.liveTailConfig, liveTailSchemaData } };
 };
+
+const toggleLiveTail = (store: LogsStore) => {
+	return { liveTailConfig: { ...defaultLiveTailConfig, showLiveTail: !store.liveTailConfig.showLiveTail } };
+}; 
 
 const setRefreshInterval = (_store: LogsStore, interval: number | null) => {
 	return { refreshInterval: interval };
@@ -530,6 +544,17 @@ const getUniqueValues = (data: Log[], key: string) => {
 		.value();
 };
 
+const makeExportData = (data: Log[], headers: string[], type: string): Log[] => {
+	if (type === 'JSON') {
+		return data;
+	} else if (type === 'CSV') {
+		const sanitizedCSVData = sanitizeCSVData(data, headers);
+		return [headers, ...sanitizedCSVData];
+	} else {
+		return [];
+	}
+};
+
 const logsStoreReducers: LogsStoreReducers = {
 	setTimeRange,
 	resetTimeRange,
@@ -562,6 +587,9 @@ const logsStoreReducers: LogsStoreReducers = {
 	getUniqueValues,
 	setAndFilterData,
 	getCleanStoreForRefetch,
+	toggleLiveTail,
+	setSelectedLog,
+	makeExportData
 };
 
 export { LogsProvider, useLogsStore, logsStoreReducers };

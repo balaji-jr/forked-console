@@ -150,8 +150,8 @@ const Navbar: FC = () => {
 					</Stack>
 					<Stack gap={4}>
 						{previlagedActions.map((navItem, index) => {
-							if (navItem.route === USERS_MANAGEMENT_ROUTE && !userAccessMap.hasUserAccess) return null;
-							if (navItem.route === CLUSTER_ROUTE && !userAccessMap.hasUserAccess) return null;
+							// if (navItem.route === USERS_MANAGEMENT_ROUTE && !userAccessMap.hasUserAccess) return null;
+							// if (navItem.route === CLUSTER_ROUTE && !userAccessMap.hasUserAccess) return null;
 
 							const isActiveItem = navItem.route === currentRoute;
 							return (
