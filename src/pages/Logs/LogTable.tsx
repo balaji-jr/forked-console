@@ -307,7 +307,7 @@ const Footer = (props) => {
 };
 
 const TableHeader = (props) => {
-	const [{headers, disabledColumns, pinnedColumns}] = useLogsStore(store => store.tableOpts);
+	const [{ headers, disabledColumns, pinnedColumns }] = useLogsStore((store) => store.tableOpts);
 
 	if (headers.length > 0) {
 		return headers
@@ -349,7 +349,6 @@ const LogTable2 = () =>{
 	const { getDataSchema, loading: schemaLoading, error: logStreamSchemaError } = useGetLogStreamSchema();
 	const { getQueryData, loading: logsLoading, error: logsError, fetchCount } = useQueryLogs();
 
-	const { fetchQueryMutation } = useQueryResult();
 	const [currentPage] = useLogsStore(store => store.tableOpts.currentPage)
 	const [currentOffset] = useLogsStore(store => store.tableOpts.currentOffset)
 
@@ -370,6 +369,7 @@ const LogTable2 = () =>{
 	const hasContentLoaded = !schemaLoading && !logsLoading;
 	const errorMessage = logStreamSchemaError || logsError;
 	const hasNoData = hasContentLoaded && !errorMessage && pageData.length === 0;
+
 	return (
 		<TableContainer>
 			<FilterPills />
@@ -451,7 +451,6 @@ const LogTable: FC = () => {
 	const appliedFilter = (key: string) => {
 		return subLogSearch.get().filters[key] ?? [];
 	};
-
 	
 	const currentStreamName = subLogQuery.get().streamName;
 	const startTime = subLogQuery.get().startTime;

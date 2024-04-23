@@ -1,9 +1,10 @@
 import { ActionIcon, Badge, Group, rem } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
-import { type FC, Fragment, useMemo, useCallback } from 'react';
+import { type FC, Fragment, useCallback } from 'react';
 import { logsStoreReducers, useLogsStore } from './providers/LogsProvider';
+import _ from 'lodash';
 
-const { deleteFilterItem } = logsStoreReducers;
+const { setAndFilterData } = logsStoreReducers;
 
 type RemoveButton = {
 	onClick: () => void;
@@ -19,25 +20,26 @@ const RemoveButton: FC<RemoveButton> = (props) => {
 };
 
 const FilterPills: FC = () => {
-	const [quickFilters, setLogsStore] = useLogsStore((store) => store.quickFilters);
-	const filters = useMemo(() => Object.keys(quickFilters.filters), [quickFilters]);
+	const [filters, setLogsStore] = useLogsStore((store) => store.tableOpts.filters);
 	const onRemove = useCallback((key: string) => {
-		setLogsStore((store) => deleteFilterItem(store, key));
+		setLogsStore((store) => setAndFilterData(store, key, [], true));
 	}, []);
+
+	console.log(filters, "kello")
 
 	return (
 		<Fragment>
-			{filters.length ? (
+			{!_.isEmpty(filters) ? (
 				<Group justify="left" mt="md" ml="md">
-					{filters.map((key) => {
+					{_.map(filters, (_v, k) => {
 						return (
 							<Badge
-								key={key}
+								key={k}
 								color="brandPrimary.4"
 								variant="filled"
 								pr={0}
-								rightSection={<RemoveButton onClick={() => onRemove(key)} />}>
-								{`${key} (${quickFilters.filters[key].length})`}
+								rightSection={<RemoveButton onClick={() => onRemove(k)} />}>
+								{`${k} (${filters[k].length})`}
 							</Badge>
 						);
 					})}

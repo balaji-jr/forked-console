@@ -5,6 +5,7 @@ import initContext from '@/utils/initContext';
 import dayjs from 'dayjs';
 import { addOrRemoveElement } from '@/utils';
 import { getPageSlice, makeHeadersFromSchema, makeHeadersfromData } from '../utils';
+import _ from 'lodash';
 
 export const DEFAULT_FIXED_DURATIONS = FIXED_DURATIONS[0];
 
@@ -113,6 +114,9 @@ type LogsStore = {
 		perPage: number;
 		currentOffset: number;
 		headers: string[];
+		sortKey: string;
+		sortOrder: 'asc' | 'desc',
+		filters: Record<string, string[]>;
 	};
 
 	data: LogQueryData & {
@@ -147,11 +151,14 @@ type LogsStoreReducers = {
 	setCurrentPage: (store: LogsStore, page: number) => ReducerOutput;
 	setTotalCount: (store: LogsStore, totalCount: number) => ReducerOutput;
 	setPageAndPageData: (store: LogsStore, pageNo: number) => ReducerOutput;
+	setAndSortData: (store: LogsStore, sortKey: string, sortOrder: 'asc' | 'desc') => ReducerOutput;
+	setAndFilterData: (store: LogsStore, filterKey: string, filterValues: string[], remove?: boolean) => ReducerOutput;
 
 	// data reducers
-	setData: (store: LogsStore, newData: { rawData?: Log[]; filteredData?: Log[] }) => ReducerOutput;
+	setData: (store: LogsStore, data: Log[]) => ReducerOutput;
 	setStreamSchema: (store: LogsStore, schema: LogStreamSchemaData) => ReducerOutput;
 	applyCustomQuery: (store: LogsStore, query: string, mode: 'filters' | 'sql') => ReducerOutput;
+	getUniqueValues: (data: Log[], key: string) => string[];
 };
 
 const initialState: LogsStore = {
@@ -180,6 +187,9 @@ const initialState: LogsStore = {
 		currentPage: 0,
 		currentOffset: 0,
 		headers: [],
+		sortKey: 'p_timestamp',
+		sortOrder: 'desc',
+		filters: {}
 	},
 
 	// data
@@ -308,10 +318,26 @@ const togglePinnedColumns = (store: LogsStore, columnName: string) => {
 	};
 };
 
-const setData = (store: LogsStore, newData: { rawData?: Log[]; filteredData?: Log[] }) => {
+const filterAndSortData = (opts: {sortOrder: 'asc' | 'desc', sortKey: string, filters: Record<string, string[]>}, data: Log[]) => {
+	const { sortOrder, sortKey, filters } = opts;
+	const filteredData = _.isEmpty(filters)
+		? data
+		: _.reduce(
+				data,
+				(acc, d) => {
+					const doesMatch = _.some(filters, (value, key) => _.includes(value, _.toString(d[key])));
+					return doesMatch ? [...acc, d] : acc;
+				},
+				[],
+		  );
+	const sortedData = _.orderBy(filteredData, [sortKey], [sortOrder]);
+	return sortedData;
+}
+
+const setData = (store: LogsStore, data: Log[]) => {
 	const { data: existingData, custQuerySearchState, tableOpts } = store;
-	const { rawData, filteredData } = newData;
 	const currentPage = tableOpts.currentPage === 0 ? 1 : tableOpts.currentPage;
+	const filteredData = filterAndSortData(tableOpts, data);
 	const newPageSlice = filteredData && getPageSlice(currentPage, tableOpts.perPage, filteredData);
 
 	// only if pageoffset is 1
@@ -327,7 +353,7 @@ const setData = (store: LogsStore, newData: { rawData?: Log[]; filteredData?: Lo
 			...(newHeaders ? { headers: newHeaders } : {}),
 			currentPage,
 		},
-		data: { ...existingData, ...(rawData ? { rawData } : {}), ...(filteredData ? { filteredData } : {}) },
+		data: { ...existingData, rawData: data, filteredData: data },
 	};
 };
 
@@ -426,6 +452,56 @@ const applyCustomQuery = (store: LogsStore, query: string, mode: 'filters' | 'sq
 	};
 };
 
+const setAndSortData = (store: LogsStore, sortKey: string, sortOrder: 'asc' | 'desc') => {
+	const {data, tableOpts} = store;
+	const filteredData = filterAndSortData({sortKey, sortOrder, filters: tableOpts.filters}, data.rawData);
+	const currentPage = 1;
+	const newPageSlice = getPageSlice(currentPage, tableOpts.perPage, filteredData);
+
+	return {
+		data: {
+			...data,
+			filteredData
+		},
+		tableOpts: {
+			...tableOpts,
+			sortKey,
+			sortOrder,
+			pageData: newPageSlice,
+			currentPage
+		}
+	}
+}
+
+const setAndFilterData = (store: LogsStore, filterKey: string, filterValues: [], remove: boolean = false) => {
+	const {data, tableOpts} = store;
+	const { sortKey, sortOrder, filters } = tableOpts;
+	const updatedFilters = remove ? _.omit(filters, filterKey) : { ...filters, [filterKey]: filterValues }
+	const filteredData = filterAndSortData(
+		{ sortOrder, sortKey, filters: updatedFilters },
+		data.rawData,
+	);
+	const currentPage = 1;
+	const newPageSlice = getPageSlice(currentPage, tableOpts.perPage, filteredData);
+
+	return {
+		data: {
+			...data,
+			filteredData
+		},
+		tableOpts: {
+			...tableOpts,
+			filters: updatedFilters,
+			pageData: newPageSlice,
+			currentPage
+		}
+	}
+}
+
+const getUniqueValues = (data: Log[], key: string) => {
+	return _.chain(data).map(key).compact().uniq().map(v => _.toString(v)).value();
+}
+
 const logsStoreReducers: LogsStoreReducers = {
 	setTimeRange,
 	resetTimeRange,
@@ -454,6 +530,9 @@ const logsStoreReducers: LogsStoreReducers = {
 	setTotalCount,
 	setPageAndPageData,
 	applyCustomQuery,
+	setAndSortData,
+	getUniqueValues,
+	setAndFilterData
 };
 
 export { LogsProvider, useLogsStore, logsStoreReducers };

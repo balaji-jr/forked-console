@@ -176,12 +176,10 @@ export const useQueryLogs = () => {
 			const data = logsQueryRes.data;
 
 			if (logsQueryRes.status === StatusCodes.OK) {
-				_dataRef.current = data;
-				return;
+				return setLogsStore(store => setData(store, data))
 			}
 			if (typeof data === 'string' && data.includes('Stream is not initialized yet')) {
-				_dataRef.current = [];
-				return;
+				return setLogsStore(store => setData(store, []))
 			}
 			setError('Failed to query log');
 		} catch {
