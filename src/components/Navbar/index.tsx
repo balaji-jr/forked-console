@@ -16,6 +16,7 @@ import { NAVBAR_WIDTH, PRIMARY_HEADER_HEIGHT } from '@/constants/theme';
 import UserModal from './UserModal';
 import { signOutHandler } from '@/utils';
 import { appStoreReducers, useAppStore } from '@/layouts/MainLayout/providers/AppProvider';
+import _ from 'lodash';
 
 const { setUserRoles, setUserSpecificStreams, setUserAccessMap, changeStream } = appStoreReducers;
 
@@ -84,11 +85,7 @@ const Navbar: FC = () => {
 	const navigateToPage = useCallback(
 		(route: string) => {
 			if (route === LOGS_ROUTE) {
-				const hasAccessToStream =
-					userSpecificStreams &&
-					userSpecificStreams.length !== 0 &&
-					userSpecificStreams.find((stream: any) => stream.name === streamName);
-				if (!hasAccessToStream) return navigate('/');
+				if (_.isEmpty(userSpecificStreams) || _.isNil(userSpecificStreams)) return navigate('/');
 
 				const defaultStream = currentStream && currentStream.length !== 0 ? currentStream : userSpecificStreams[0].name;
 				const stream = !streamName || streamName.length === 0 ? defaultStream : streamName;
@@ -122,7 +119,8 @@ const Navbar: FC = () => {
 
 	useEffect(() => {
 		if (streamName && streamName.length !== 0 && userSpecificStreams && userSpecificStreams.length !== 0) {
-			navigateToPage(LOGS_ROUTE);
+			const hasAccessToStream = userSpecificStreams.find((stream: any) => stream.name === streamName);
+			return hasAccessToStream ? navigateToPage(LOGS_ROUTE) : navigateToPage('/');
 		}
 	}, [streamName, userSpecificStreams]);
 

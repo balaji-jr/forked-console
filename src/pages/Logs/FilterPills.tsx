@@ -25,8 +25,6 @@ const FilterPills: FC = () => {
 		setLogsStore((store) => setAndFilterData(store, key, [], true));
 	}, []);
 
-	console.log(filters, "kello")
-
 	return (
 		<Fragment>
 			{!_.isEmpty(filters) ? (

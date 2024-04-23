@@ -1,6 +1,6 @@
 import { Log } from '@/@types/parseable/api/query';
 import { LogStreamData, LogStreamSchemaData } from '@/@types/parseable/api/stream';
-import { FIXED_DURATIONS } from '@/constants/timeConstants';
+import { FIXED_DURATIONS, FixedDuration } from '@/constants/timeConstants';
 import initContext from '@/utils/initContext';
 import dayjs from 'dayjs';
 import { addOrRemoveElement } from '@/utils';
@@ -16,6 +16,7 @@ type TimeRange = {
 	endTime: Date;
 	type: 'fixed' | 'custom';
 	label: string;
+	interval: number | null,
 };
 
 enum SortOrder {
@@ -41,13 +42,15 @@ type LiveTailConfig = {
 	liveTailSearchField: string;
 };
 
-const getDefaultTimeRange = () => {
+const getDefaultTimeRange = (duration: FixedDuration = DEFAULT_FIXED_DURATIONS) => {
 	const now = dayjs().startOf('minute');
+	const { milliseconds, name } = duration;
 	return {
-		startTime: now.subtract(DEFAULT_FIXED_DURATIONS.milliseconds, 'milliseconds').toDate(),
+		startTime: now.subtract(milliseconds, 'milliseconds').toDate(),
 		endTime: now.toDate(),
 		type: 'fixed' as 'fixed',
-		label: DEFAULT_FIXED_DURATIONS.name,
+		label: name,
+		interval: milliseconds,
 	};
 };
 
@@ -205,7 +208,10 @@ const { Provider: LogsProvider, useStore: useLogsStore } = initContext(initialSt
 
 // reducers
 const setTimeRange = (store: LogsStore, payload: Partial<TimeRange>) => {
-	return { timeRange: { ...store.timeRange, ...payload } };
+	const { label } = payload;
+	const duration = _.find(FIXED_DURATIONS, (duration) => duration.name === label);
+	const interval = duration?.milliseconds || null;
+	return { timeRange: { ...store.timeRange, ...payload, interval } };
 };
 
 const resetTimeRange = (store: LogsStore) => {
@@ -419,7 +425,11 @@ const setPageAndPageData = (store: LogsStore, pageNo: number) => {
 };
 
 const getCleanStoreForRefetch = (store: LogsStore) => {
-	const { tableOpts, data } = store;
+	const { tableOpts, data, timeRange } = store;
+	const { interval, type } = timeRange;
+	
+	const duration = _.find(FIXED_DURATIONS, (duration) => duration.name === timeRange.label);
+	const updatedTimeRange = interval && type === 'fixed' ? { timeRange: getDefaultTimeRange(duration) } : {};
 	return {
 		tableOpts: {
 			...tableOpts,
@@ -435,6 +445,7 @@ const getCleanStoreForRefetch = (store: LogsStore) => {
 			filteredData: [],
 			rawData: [],
 		},
+		...updatedTimeRange,
 	};
 };
 
@@ -532,7 +543,8 @@ const logsStoreReducers: LogsStoreReducers = {
 	applyCustomQuery,
 	setAndSortData,
 	getUniqueValues,
-	setAndFilterData
+	setAndFilterData,
+	getCleanStoreForRefetch
 };
 
 export { LogsProvider, useLogsStore, logsStoreReducers };

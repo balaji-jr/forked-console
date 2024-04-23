@@ -138,8 +138,6 @@ const Querier = () => {
 			}
 		}
 
-		console.log(allValues, showQueryBuilder)
-
 		// trigger reset when no active rules are available
 		if (isQuerySearchActive && allValues.length === 0) {
 			onClear();

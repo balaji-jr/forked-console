@@ -60,7 +60,7 @@ const Home: FC = () => {
 
 	return (
 		<ScrollArea>
-		<Box className={container} style={{ display: 'flex', flex: 1, marginTop: '1rem' }}>
+		<Box className={container} style={{ display: 'flex', flex: 1, marginTop: '1rem', paddingBottom: '3rem' }}>
 			<CreateStreamModal opened={createStreamModalOpen} close={toggleCreateStreamModal} />
 			<Stack
 				style={{

@@ -133,9 +133,6 @@ const PinnedColumns = (props) => {
 		}
 	}, [pinnedContianerRef, pinnedColumns]);
 
-
-	{/* {pinnedColumnsWidth > 0 && <Box style={{ height: '100%', borderLeft: '1px solid #ccc' }} />} */}
-
 	return (
 		<ScrollArea
 			w={`${pinnedColumnsWidth}px`}
