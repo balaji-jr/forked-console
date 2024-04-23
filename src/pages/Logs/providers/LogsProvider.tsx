@@ -16,7 +16,7 @@ type TimeRange = {
 	endTime: Date;
 	type: 'fixed' | 'custom';
 	label: string;
-	interval: number | null,
+	interval: number | null;
 };
 
 enum SortOrder {
@@ -118,7 +118,7 @@ type LogsStore = {
 		currentOffset: number;
 		headers: string[];
 		sortKey: string;
-		sortOrder: 'asc' | 'desc',
+		sortOrder: 'asc' | 'desc';
 		filters: Record<string, string[]>;
 	};
 
@@ -156,6 +156,7 @@ type LogsStoreReducers = {
 	setPageAndPageData: (store: LogsStore, pageNo: number) => ReducerOutput;
 	setAndSortData: (store: LogsStore, sortKey: string, sortOrder: 'asc' | 'desc') => ReducerOutput;
 	setAndFilterData: (store: LogsStore, filterKey: string, filterValues: string[], remove?: boolean) => ReducerOutput;
+	getCleanStoreForRefetch: (store: LogsStore) => ReducerOutput;
 
 	// data reducers
 	setData: (store: LogsStore, data: Log[]) => ReducerOutput;
@@ -186,13 +187,13 @@ const initialState: LogsStore = {
 		perPage: 30,
 		totalCount: 0,
 		displayedCount: 0,
-		totalPages: 300,
+		totalPages: 0,
 		currentPage: 0,
 		currentOffset: 0,
 		headers: [],
 		sortKey: 'p_timestamp',
 		sortOrder: 'desc',
-		filters: {}
+		filters: {},
 	},
 
 	// data
@@ -205,6 +206,10 @@ const initialState: LogsStore = {
 };
 
 const { Provider: LogsProvider, useStore: useLogsStore } = initContext(initialState);
+
+const getTotalPages = (data: Log[], perPage: number) => {
+	return _.isEmpty(data) ? 0 : _.size(data) / perPage;
+};
 
 // reducers
 const setTimeRange = (store: LogsStore, payload: Partial<TimeRange>) => {
@@ -324,21 +329,24 @@ const togglePinnedColumns = (store: LogsStore, columnName: string) => {
 	};
 };
 
-const filterAndSortData = (opts: {sortOrder: 'asc' | 'desc', sortKey: string, filters: Record<string, string[]>}, data: Log[]) => {
+const filterAndSortData = (
+	opts: { sortOrder: 'asc' | 'desc'; sortKey: string; filters: Record<string, string[]> },
+	data: Log[],
+) => {
 	const { sortOrder, sortKey, filters } = opts;
 	const filteredData = _.isEmpty(filters)
 		? data
-		: _.reduce(
+		: (_.reduce(
 				data,
-				(acc, d) => {
+				(acc: Log[], d: Log) => {
 					const doesMatch = _.some(filters, (value, key) => _.includes(value, _.toString(d[key])));
 					return doesMatch ? [...acc, d] : acc;
 				},
 				[],
-		  );
+		  ) as Log[]);
 	const sortedData = _.orderBy(filteredData, [sortKey], [sortOrder]);
 	return sortedData;
-}
+};
 
 const setData = (store: LogsStore, data: Log[]) => {
 	const { data: existingData, custQuerySearchState, tableOpts } = store;
@@ -358,6 +366,7 @@ const setData = (store: LogsStore, data: Log[]) => {
 			...(newPageSlice ? { pageData: newPageSlice } : {}),
 			...(newHeaders ? { headers: newHeaders } : {}),
 			currentPage,
+			totalPages: getTotalPages(filteredData, tableOpts.perPage),
 		},
 		data: { ...existingData, rawData: data, filteredData: data },
 	};
@@ -420,6 +429,7 @@ const setPageAndPageData = (store: LogsStore, pageNo: number) => {
 			...store.tableOpts,
 			pageData: newPageSlice,
 			currentPage: pageNo,
+			totalPages: getTotalPages(filteredData, tableOpts.perPage),
 		},
 	};
 };
@@ -427,7 +437,7 @@ const setPageAndPageData = (store: LogsStore, pageNo: number) => {
 const getCleanStoreForRefetch = (store: LogsStore) => {
 	const { tableOpts, data, timeRange } = store;
 	const { interval, type } = timeRange;
-	
+
 	const duration = _.find(FIXED_DURATIONS, (duration) => duration.name === timeRange.label);
 	const updatedTimeRange = interval && type === 'fixed' ? { timeRange: getDefaultTimeRange(duration) } : {};
 	return {
@@ -439,6 +449,7 @@ const getCleanStoreForRefetch = (store: LogsStore) => {
 			currentPage: 0,
 			currentOffset: 0,
 			headers: [],
+			totalPages: 0,
 		},
 		data: {
 			...data,
@@ -464,54 +475,58 @@ const applyCustomQuery = (store: LogsStore, query: string, mode: 'filters' | 'sq
 };
 
 const setAndSortData = (store: LogsStore, sortKey: string, sortOrder: 'asc' | 'desc') => {
-	const {data, tableOpts} = store;
-	const filteredData = filterAndSortData({sortKey, sortOrder, filters: tableOpts.filters}, data.rawData);
+	const { data, tableOpts } = store;
+	const filteredData = filterAndSortData({ sortKey, sortOrder, filters: tableOpts.filters }, data.rawData);
 	const currentPage = 1;
 	const newPageSlice = getPageSlice(currentPage, tableOpts.perPage, filteredData);
 
 	return {
 		data: {
 			...data,
-			filteredData
+			filteredData,
 		},
 		tableOpts: {
 			...tableOpts,
 			sortKey,
 			sortOrder,
 			pageData: newPageSlice,
-			currentPage
-		}
-	}
-}
+			currentPage,
+			totalPages: getTotalPages(filteredData, tableOpts.perPage),
+		},
+	};
+};
 
-const setAndFilterData = (store: LogsStore, filterKey: string, filterValues: [], remove: boolean = false) => {
-	const {data, tableOpts} = store;
+const setAndFilterData = (store: LogsStore, filterKey: string, filterValues: string[], remove: boolean = false) => {
+	const { data, tableOpts } = store;
 	const { sortKey, sortOrder, filters } = tableOpts;
-	const updatedFilters = remove ? _.omit(filters, filterKey) : { ...filters, [filterKey]: filterValues }
-	const filteredData = filterAndSortData(
-		{ sortOrder, sortKey, filters: updatedFilters },
-		data.rawData,
-	);
+	const updatedFilters = remove ? _.omit(filters, filterKey) : { ...filters, [filterKey]: filterValues };
+	const filteredData = filterAndSortData({ sortOrder, sortKey, filters: updatedFilters }, data.rawData);
 	const currentPage = 1;
 	const newPageSlice = getPageSlice(currentPage, tableOpts.perPage, filteredData);
 
 	return {
 		data: {
 			...data,
-			filteredData
+			filteredData,
 		},
 		tableOpts: {
 			...tableOpts,
 			filters: updatedFilters,
 			pageData: newPageSlice,
-			currentPage
-		}
-	}
-}
+			currentPage,
+			totalPages: getTotalPages(filteredData, tableOpts.perPage),
+		},
+	};
+};
 
 const getUniqueValues = (data: Log[], key: string) => {
-	return _.chain(data).map(key).compact().uniq().map(v => _.toString(v)).value();
-}
+	return _.chain(data)
+		.map(key)
+		.compact()
+		.uniq()
+		.map((v) => _.toString(v))
+		.value();
+};
 
 const logsStoreReducers: LogsStoreReducers = {
 	setTimeRange,
@@ -544,7 +559,7 @@ const logsStoreReducers: LogsStoreReducers = {
 	setAndSortData,
 	getUniqueValues,
 	setAndFilterData,
-	getCleanStoreForRefetch
+	getCleanStoreForRefetch,
 };
 
 export { LogsProvider, useLogsStore, logsStoreReducers };
