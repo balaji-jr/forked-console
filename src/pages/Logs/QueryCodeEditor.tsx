@@ -6,12 +6,11 @@ import useMountedState from '@/hooks/useMountedState';
 import { notify } from '@/utils/notification';
 import { usePostLLM } from '@/hooks/usePostLLM';
 import { sanitiseSqlString } from '@/utils/sanitiseSqlString';
-import { LOAD_LIMIT } from './logsContextProvider';
 import { Field } from '@/@types/parseable/dataType';
 import queryCodeStyles from './styles/QueryCode.module.css';
 import { useAppStore } from '@/layouts/MainLayout/providers/AppProvider';
 import { useFilterStore } from './providers/FilterProvider';
-import { useLogsStore } from './providers/LogsProvider';
+import { LOAD_LIMIT, useLogsStore } from './providers/LogsProvider';
 
 const genColumnConfig = (fields: Field[]) => {
 	const columnConfig = { leftColumns: [], rightColumns: [] };

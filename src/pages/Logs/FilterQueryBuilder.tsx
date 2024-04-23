@@ -24,10 +24,16 @@ export const FilterPlaceholder = () => {
 };
 
 import { useCallback, useEffect } from 'react';
-import { noValueOperators, textFieldOperators, numberFieldOperators } from '@/providers/QueryFilterProvider';
-import { RuleTypeOverride, RuleGroupTypeOverride, Combinator } from '@/providers/QueryFilterProvider';
 import { useFilterStore, filterStoreReducers, operatorLabelMap } from './providers/FilterProvider';
 import { useLogsStore } from './providers/LogsProvider';
+import {
+	noValueOperators,
+	textFieldOperators,
+	numberFieldOperators,
+	RuleGroupTypeOverride,
+	RuleTypeOverride,
+	Combinator,
+} from './providers/FilterProvider';
 
 type RuleSetProps = {
 	ruleSet: RuleGroupTypeOverride;

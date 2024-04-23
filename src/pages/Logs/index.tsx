@@ -2,7 +2,7 @@ import { Box } from '@mantine/core';
 import { useDocumentTitle } from '@mantine/hooks';
 import { FC } from 'react';
 import StaticLogTable from './LogTable';
-import LiveLogTable from '../LiveTail/LogTable';
+// import LiveLogTable from '../LiveTail/LogTable';
 import ViewLog from './ViewLog';
 import DeleteStreamModal from './DeleteStreamModal';
 import AlertsModal from './AlertsModal';
@@ -24,7 +24,7 @@ const Logs: FC = () => {
 			<RententionModal />
 			<PrimaryToolbar />
 			<SecondaryToolbar />
-			{showLiveTail ? <LiveLogTable /> : <StaticLogTable />}
+			{showLiveTail ? <StaticLogTable /> : <StaticLogTable />}
 			{/* TODO: need to move the live logtable into the Logs folder */}
 			<ViewLog />
 		</Box>

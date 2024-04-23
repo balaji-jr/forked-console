@@ -21,7 +21,6 @@ import {
 } from '@mantine/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FC, MutableRefObject, ReactNode, RefObject } from 'react';
-import { LOG_TABLE_PER_PAGE } from './logsContextProvider';
 import LogRow from './LogRow';
 import useMountedState from '@/hooks/useMountedState';
 import { IconSelector, IconGripVertical, IconPin, IconPinFilled, IconSettings } from '@tabler/icons-react';
@@ -34,7 +33,7 @@ import { usePagination } from '@mantine/hooks';
 import tableStyles from './styles/Logs.module.css';
 import { LOGS_PRIMARY_TOOLBAR_HEIGHT, LOGS_SECONDARY_TOOLBAR_HEIGHT, PRIMARY_HEADER_HEIGHT } from '@/constants/theme';
 import { HumanizeNumber } from '@/utils/formatBytes';
-import { useLogsStore, logsStoreReducers } from './providers/LogsProvider';
+import { useLogsStore, logsStoreReducers, LOG_QUERY_LIMITS } from './providers/LogsProvider';
 import { useAppStore } from '@/layouts/MainLayout/providers/AppProvider';
 import _ from 'lodash';
 
@@ -520,7 +519,7 @@ const LimitControl: FC = () => {
 					</Menu.Target>
 				</Center>
 				<Menu.Dropdown>
-					{LOG_TABLE_PER_PAGE.map((limit) => {
+					{LOG_QUERY_LIMITS.map((limit) => {
 						return (
 							<Menu.Item
 								className={limit === perPage ? limitActive : limitOption}

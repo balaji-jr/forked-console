@@ -3,6 +3,34 @@ import { generateRandomId } from '@/utils';
 import initContext from '@/utils/initContext';
 import { Field, RuleGroupType, RuleType, formatQuery } from 'react-querybuilder';
 
+export const textFieldOperators = [
+	{ value: '=', label: '=' },
+	{ value: '!=', label: '!=' },
+	{ value: 'contains', label: 'contains' },
+	{ value: 'beginsWith', label: 'begins with' },
+	{ value: 'endsWith', label: 'ends with' },
+	{ value: 'doesNotContain', label: 'does not contain' },
+	{ value: 'doesNotBeginWith', label: 'does not begin with' },
+	{ value: 'doesNotEndWith', label: 'does not end with' },
+	{ value: 'null', label: 'is null' },
+	{ value: 'notNull', label: 'is not null' },
+];
+
+export const numberFieldOperators = [
+	{ value: '=', label: '=' },
+	{ value: '!=', label: '!=' },
+	{ value: '<', label: '<' },
+	{ value: '>', label: '>' },
+	{ value: '<=', label: '<=' },
+	{ value: '>=', label: '>=' },
+	{ value: 'null', label: 'is null' },
+	{ value: 'notNull', label: 'is not null' },
+	// { name: 'in', label: 'in' },
+	// { name: 'notIn', label: 'not in' },
+	// { name: 'between', label: 'between' },
+	// { name: 'notBetween', label: 'not between' },
+];
+
 export type RuleTypeOverride = Omit<RuleType, 'id'> & {
 	id: string;
 };
