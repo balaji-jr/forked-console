@@ -10,10 +10,8 @@ import { useLogsStore } from './providers/LogsProvider';
 const columnsToSkip = ['p_metadata', 'p_tags'];
 
 type LogRowProps = {
-	logData: Log[];
-	headers: string[];
-	isColumnActive: (columnName: string) => boolean;
 	rowArrows?: boolean;
+	isPinned?: boolean;
 };
 
 const LogRow: FC<LogRowProps> = (props) => {

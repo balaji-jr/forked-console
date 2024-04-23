@@ -153,7 +153,7 @@ type LogsStoreReducers = {
 	setPerPage: (store: LogsStore, perPage: number) => ReducerOutput;
 	setCurrentPage: (store: LogsStore, page: number) => ReducerOutput;
 	setTotalCount: (store: LogsStore, totalCount: number) => ReducerOutput;
-	setPageAndPageData: (store: LogsStore, pageNo: number) => ReducerOutput;
+	setPageAndPageData: (store: LogsStore, pageNo: number, perPage?: number) => ReducerOutput;
 	setAndSortData: (store: LogsStore, sortKey: string, sortOrder: 'asc' | 'desc') => ReducerOutput;
 	setAndFilterData: (store: LogsStore, filterKey: string, filterValues: string[], remove?: boolean) => ReducerOutput;
 	getCleanStoreForRefetch: (store: LogsStore) => ReducerOutput;
@@ -417,19 +417,21 @@ const setTotalCount = (store: LogsStore, totalCount: number) => {
 	};
 };
 
-const setPageAndPageData = (store: LogsStore, pageNo: number) => {
+const setPageAndPageData = (store: LogsStore, pageNo: number, perPage?: number) => {
 	const {
 		data: { filteredData },
 		tableOpts,
 	} = store;
-	const newPageSlice = filteredData && getPageSlice(pageNo, tableOpts.perPage, filteredData);
+	const updatedPerPage = perPage || tableOpts.perPage
+	const newPageSlice = filteredData && getPageSlice(pageNo, updatedPerPage, filteredData);
 
 	return {
 		tableOpts: {
 			...store.tableOpts,
 			pageData: newPageSlice,
 			currentPage: pageNo,
-			totalPages: getTotalPages(filteredData, tableOpts.perPage),
+			totalPages: getTotalPages(filteredData, updatedPerPage),
+			perPage: updatedPerPage
 		},
 	};
 };
