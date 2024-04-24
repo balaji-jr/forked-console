@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { useLogStream } from '@/hooks/useLogStream';
 import { useLogsStore, logsStoreReducers } from './providers/LogsProvider';
 import { useAppStore } from '@/layouts/MainLayout/providers/AppProvider';
+import { useNavigate } from 'react-router-dom';
 
 const { toggleDeleteModal } = logsStoreReducers;
 
@@ -17,12 +18,17 @@ const DeleteStreamModal = () => {
 		setLogsStore((store) => toggleDeleteModal(store));
 	}, []);
 	const { deleteLogStreamMutation } = useLogStream();
+	const navigate = useNavigate();
 
+	const onDeleteSuccess = useCallback(() => {
+		onToggleModal();
+		navigate('/');
+	}, [])
 	const [currentStream] = useAppStore((store) => store.currentStream);
 
 	const handleDeleteStream = useCallback(() => {
 		if (!currentStream) return;
-		deleteLogStreamMutation({ deleteStream: currentStream });
+		deleteLogStreamMutation({ deleteStream: currentStream , onSuccess: onDeleteSuccess});
 	}, [currentStream]);
 
 	return (

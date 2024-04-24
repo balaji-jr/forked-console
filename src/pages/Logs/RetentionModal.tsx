@@ -23,9 +23,6 @@ const RententionModal = () => {
 	const { getLogRetentionData } = useGetRetention(currentStream);
 	const { updateLogStreamRetention } = useRetentionEditor(currentStream);
 	const [retentionModalOpen, setLogsStore] = useLogsStore((store) => store.modalOpts.retentionModalOpen);
-	const switchStyles = {
-		track: isCacheEnabled ? classes.trackStyle : {},
-	};
 
 	const onToggleRetentionModal = useCallback(() => {
 		setLogsStore((store) => toggleRetentionModal(store));
@@ -64,9 +61,7 @@ const RententionModal = () => {
 					<Switch
 						checked={isCacheEnabled}
 						labelPosition="left"
-						onChange={handleCacheToggle}
-						label={isCacheEnabled ? 'Enabled' : 'Disabled'}
-						styles={switchStyles}
+						onChange={(event) => handleCacheToggle(event.currentTarget.checked)}						label={isCacheEnabled ? 'Enabled' : 'Disabled'}
 					/>
 				</Stack>
 				<Text style={{ fontSize: '1rem', fontWeight: 600 }}>Retention</Text>

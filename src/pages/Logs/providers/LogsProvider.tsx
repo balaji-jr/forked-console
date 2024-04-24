@@ -134,7 +134,7 @@ type LogsStore = {
 
 type LogsStoreReducers = {
 	setTimeRange: (store: LogsStore, payload: Partial<TimeRange>) => ReducerOutput;
-	resetTimeRange: (store: LogsStore) => ReducerOutput;
+	// resetTimeRange: (store: LogsStore) => ReducerOutput;
 	deleteFilterItem: (store: LogsStore, key: string) => ReducerOutput;
 	addFilterItem: (store: LogsStore, key: string, value: string[]) => ReducerOutput;
 	setLiveTailStatus: (store: LogsStore, liveTailStatus: LiveTailStatus) => ReducerOutput;
@@ -228,16 +228,16 @@ const setTimeRange = (store: LogsStore, payload: Partial<TimeRange>) => {
 	const { label } = payload;
 	const duration = _.find(FIXED_DURATIONS, (duration) => duration.name === label);
 	const interval = duration?.milliseconds || null;
-	return { timeRange: { ...store.timeRange, ...payload, interval } };
+	return { ...getCleanStoreForRefetch(store), timeRange: { ...store.timeRange, ...payload, interval } };
 };
 
-const resetTimeRange = (store: LogsStore) => {
-	const now = dayjs();
-	const timeDiff = store.timeRange.endTime.getTime() - store.timeRange.startTime.getTime();
-	const startTime = now.subtract(timeDiff).toDate();
-	const endTime = now.toDate();
-	return store.timeRange.type === 'custom' ? store : { timeRange: { ...store.timeRange, startTime, endTime } };
-};
+// const resetTimeRange = (store: LogsStore) => {
+// 	const now = dayjs();
+// 	const timeDiff = store.timeRange.endTime.getTime() - store.timeRange.startTime.getTime();
+// 	const startTime = now.subtract(timeDiff).toDate();
+// 	const endTime = now.toDate();
+// 	return store.timeRange.type === 'custom' ? store : { timeRange: { ...store.timeRange, startTime, endTime } };
+// };
 
 const deleteFilterItem = (store: LogsStore, key: string) => {
 	const filters = store.quickFilters.filters;
@@ -559,7 +559,7 @@ const makeExportData = (data: Log[], headers: string[], type: string): Log[] => 
 
 const logsStoreReducers: LogsStoreReducers = {
 	setTimeRange,
-	resetTimeRange,
+	// resetTimeRange,
 	deleteFilterItem,
 	addFilterItem,
 	setLiveTailStatus,
